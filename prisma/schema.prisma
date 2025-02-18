@@ -1,0 +1,84 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String   @id @default(uuid()) @db.Uuid
+  address        String   @unique
+  name           String?  @db.VarChar(255)
+  phoneNumber    String?  @db.VarChar(255)
+  userName       String?  @unique
+  profileImage   String?
+  referrerId     String?
+  refferralId    String?  @unique
+  companyName    String?
+  companyWebsite String?
+  country        String?
+  state          String?
+  disabled       Boolean  @default(false)
+  role           UserRole @default(USER)
+
+  referrer  User?     @relation("UserReferrals", fields: [referrerId], references: [refferralId])
+  referrals User[]    @relation("UserReferrals")
+  projects  Project[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Project {
+  id                String               @id @default(uuid()) @db.Uuid
+  name              String
+  description       String
+  projectImage      String?
+  projectLocation   String?
+  projectAddress    String?              @unique
+  startDate         DateTime?
+  endDate           DateTime?
+  category          String
+  fundingGoal       Int                  @default(0)
+  MinimumInvestment Int                  @default(0)
+  disabled          Boolean              @default(false)
+  enabled           Boolean              @default(false)
+  status            ProjectAprovalStatus @default(PENDING)
+  projectDocument   String[]
+  userId            String               @db.Uuid
+  user              User                 @relation(fields: [userId], references: [id])
+  teamMembers       TeamMember[]
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+}
+
+model TeamMember {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  role      String
+  socials   String[]
+  teamImage String?
+  disabled  Boolean  @default(false)
+  projectId String   @db.Uuid
+  user      Project  @relation(fields: [projectId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum UserRole {
+  PROJECT
+  ADMIN
+  SUPER_ADMIN
+  USER
+}
+
+enum ProjectAprovalStatus {
+  PENDING
+  REVIEWING
+  DECLINED
+  APPROVED
+}
